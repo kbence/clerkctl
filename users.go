@@ -53,7 +53,7 @@ var userDeleteCmdParams struct {
 
 var userDeleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "Delete user(s)",
+	Short: "Delete user(s) by ID or email address",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, cancelFunc := context.WithTimeout(cmd.Context(), 5*time.Second)
