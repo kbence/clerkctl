@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/clerk/clerk-sdk-go/v2/user"
 	"github.com/spf13/cobra"
 )
@@ -20,6 +21,10 @@ var userCmd = &cobra.Command{
 	},
 }
 
+var userListCmdParams struct {
+	limit int64
+}
+
 var userListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List existing users",
@@ -27,9 +32,17 @@ var userListCmd = &cobra.Command{
 		ctx, cancelFunc := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancelFunc()
 
-		for {
+		usersLeft := userListCmdParams.limit
+		offset := int64(0)
 
-			userList, err := user.List(ctx, &user.ListParams{})
+		for {
+			limit := int64(Min(10, usersLeft))
+
+			userList, err := user.List(ctx, &user.ListParams{
+				ListParams: clerk.ListParams{
+					Limit: &limit, Offset: &offset,
+				},
+			})
 			if err != nil {
 				return err
 			}
@@ -40,6 +53,13 @@ var userListCmd = &cobra.Command{
 
 			for _, user := range userList.Users {
 				fmt.Println(user.ID, user.EmailAddresses[0].EmailAddress)
+			}
+
+			offset += int64(len(userList.Users))
+			usersLeft -= int64(len(userList.Users))
+
+			if usersLeft <= 0 {
+				break
 			}
 		}
 
@@ -88,6 +108,7 @@ var userDeleteCmd = &cobra.Command{
 }
 
 func init() {
+	userListCmd.Flags().Int64VarP(&userListCmdParams.limit, "limit", "m", 0, "Maximum number of users to list")
 	userDeleteCmd.Flags().StringVarP(&userDeleteCmdParams.Email, "email", "e", "", "Delete user by email address")
 
 	userCmd.AddCommand(userListCmd)
