@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"strings"
 	"time"
 
@@ -35,8 +36,12 @@ var userListCmd = &cobra.Command{
 		usersLeft := userListCmdParams.limit
 		offset := int64(0)
 
+		if usersLeft <= 0 {
+			usersLeft = math.MaxInt64
+		}
+
 		for {
-			limit := int64(Min(10, usersLeft))
+			limit := int64(Min(500, usersLeft))
 
 			userList, err := user.List(ctx, &user.ListParams{
 				ListParams: clerk.ListParams{
